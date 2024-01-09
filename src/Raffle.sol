@@ -62,7 +62,7 @@ contract Raffle is VRFConsumerBaseV2 {
     address payable[] private s_players;
     //@dev Duration of the lottery in seconds
     uint256 private s_lastTimeStamp;
-    address private s_reccentWinner;
+    address private s_recentWinner;
     RaffleState private s_raffleState;
 
     event EnteredRaffle(address indexed player);
@@ -142,7 +142,7 @@ contract Raffle is VRFConsumerBaseV2 {
     ) internal override {
         uint256 indexOfWinner = _randomWords[0] % s_players.length;
         address payable winner = s_players[indexOfWinner];
-        s_reccentWinner = winner;
+        s_recentWinner = winner;
         s_players = new address payable[](0);
         s_lastTimeStamp = block.timestamp;
         s_raffleState = RaffleState.OPEN;
@@ -165,5 +165,17 @@ contract Raffle is VRFConsumerBaseV2 {
 
     function getPlayer(uint256 indexOfPlayer) external view returns (address) {
         return s_players[indexOfPlayer];
+    }
+
+    function getWinner() external view returns (address) {
+        return s_recentWinner;
+    }
+
+    function getPlayersLength() external view returns (uint256) {
+        return s_players.length;
+    }
+
+    function getLastTimestamp() external view returns (uint256) {
+        return s_lastTimeStamp;
     }
 }
