@@ -100,25 +100,26 @@ contract AddConsumer is Script {
 
         //如果InteractionsTest/testCanAddConsumerInteractions使用的anvil链，则subId需要
         //创建并资助订阅获取，这里修改代码
-        if (block.chainid == 31337) {
-            CreateSubscription createSubscription = new CreateSubscription();
-            subId = createSubscription.createSubscription(
-                vrfCoordinator,
-                deployerKey
-            );
+        //
+        // if (block.chainid == 31337) {
+        //     CreateSubscription createSubscription = new CreateSubscription();
+        //     subId = createSubscription.createSubscription(
+        //         vrfCoordinator,
+        //         deployerKey
+        //     );
 
-            vm.startBroadcast();
-            LinkToken link = new LinkToken();
-            vm.stopBroadcast();
+        //     vm.startBroadcast();
+        //     LinkToken link = new LinkToken();
+        //     vm.stopBroadcast();
 
-            FundSubscription fundSubscription = new FundSubscription();
-            fundSubscription.fundSubscription(
-                vrfCoordinator,
-                subId,
-                address(link),
-                deployerKey
-            );
-        }
+        //     FundSubscription fundSubscription = new FundSubscription();
+        //     fundSubscription.fundSubscription(
+        //         vrfCoordinator,
+        //         subId,
+        //         address(link),
+        //         deployerKey
+        //     );
+        // }
 
         addConsumer(vrfCoordinator, subId, raffle, deployerKey);
     }

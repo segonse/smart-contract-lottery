@@ -4,8 +4,7 @@
 
 This code is to create a proveably random smart contract lottery.
 
-## What we want it to do?
+## Sepolia Address
+0x35cFbDF4Bad60dCBa37ddaD441976d032cd39bED
 
-1.Users can enter by paying for a ticket 
-    1. The ticket fees are going to go to the winner during the draw
  

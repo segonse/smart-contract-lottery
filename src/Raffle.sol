@@ -67,6 +67,7 @@ contract Raffle is VRFConsumerBaseV2 {
 
     event EnteredRaffle(address indexed player);
     event PickedWinner(address indexed winner);
+    event RequestedRaffleWinner(uint256 requestId);
 
     constructor(
         uint256 entranceFee,
@@ -113,7 +114,7 @@ contract Raffle is VRFConsumerBaseV2 {
     }
 
     //1.获取随机数，使用随机数选定winner，每隔一段时间自动进行（通过chainlink实现）
-    function performUpkeep() public {
+    function performUpkeep(bytes calldata /* performData */) public {
         /* pickWinner */
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
@@ -133,11 +134,13 @@ contract Raffle is VRFConsumerBaseV2 {
             i_callbackGasLimit,
             NUM_WORDS
         );
+
+        emit RequestedRaffleWinner(requestId);
     }
 
     function fulfillRandomWords(
         //CEI Check Effect Interaction
-        uint256 _requestId,
+        uint256 /* _requestId */,
         uint256[] memory _randomWords
     ) internal override {
         uint256 indexOfWinner = _randomWords[0] % s_players.length;

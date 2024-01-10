@@ -85,7 +85,7 @@ contract RaffleState is Test {
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
-        raffle.performUpkeep();
+        raffle.performUpkeep("");
 
         vm.expectRevert(Raffle.Raffle__raffleNotOpen.selector);
         vm.prank(PLAYER);
@@ -110,7 +110,7 @@ contract RaffleState is Test {
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
-        raffle.performUpkeep();
+        raffle.performUpkeep("");
         // console.log(uint256(raffle.getRaffleState()));
         (bool upkeepNeeded, ) = raffle.checkUpkeep("");
         assert(!upkeepNeeded);
@@ -149,7 +149,7 @@ contract RaffleState is Test {
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
 
-        raffle.performUpkeep();
+        raffle.performUpkeep("");
     }
 
     function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() public {
@@ -164,7 +164,7 @@ contract RaffleState is Test {
                 raffleState
             )
         );
-        raffle.performUpkeep();
+        raffle.performUpkeep("");
     }
 
     function testPerformUpkeepUpdatesRaffleStateAndEmitRequestId()
@@ -172,7 +172,7 @@ contract RaffleState is Test {
         raffleEnteedAndTimePassed
     {
         vm.recordLogs();
-        raffle.performUpkeep();
+        raffle.performUpkeep("");
         Vm.Log[] memory entries = vm.getRecordedLogs();
         bytes32 requestId = entries[0].topics[2];
         // console.log(uint256(requestId));
@@ -217,7 +217,7 @@ contract RaffleState is Test {
         }
 
         vm.recordLogs();
-        raffle.performUpkeep();
+        raffle.performUpkeep("");
         Vm.Log[] memory entries = vm.getRecordedLogs();
         bytes32 requestId = entries[0].topics[2];
 
