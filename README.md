@@ -1,10 +1,5 @@
-# Proveably Random Raffle Contracts
+## Verifiable lottery contracts based on chainlink vrf and automation
+now update VRF v2.5
 
-## About
-
-This code is to create a proveably random smart contract lottery.
-
-## Sepolia Address
-0x35cFbDF4Bad60dCBa37ddaD441976d032cd39bED
-
- 
+## sepolia address
+0xF737D6F68A6f186CA8c1b4b8967023430347e01F

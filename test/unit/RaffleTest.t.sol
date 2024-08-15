@@ -3,10 +3,10 @@ pragma solidity ^0.8.18;
 
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {Raffle} from "../../src/Raffle.sol";
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console2} from "forge-std/Test.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Vm} from "forge-std/Vm.sol";
-import {VRFCoordinatorV2Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleState is Test {
     Raffle raffle;
@@ -19,7 +19,7 @@ contract RaffleState is Test {
     uint256 interval;
     address vrfCoordinator;
     bytes32 gasLane;
-    uint64 subscriptionId;
+    uint256 subscriptionId;
     uint32 callbackGasLimit;
     address link;
 
@@ -174,7 +174,8 @@ contract RaffleState is Test {
         vm.recordLogs();
         raffle.performUpkeep("");
         Vm.Log[] memory entries = vm.getRecordedLogs();
-        bytes32 requestId = entries[0].topics[2];
+        // bytes32 requestId = entries[0].topics[2];
+        bytes32 requestId = entries[1].topics[1];
         // console.log(uint256(requestId));
 
         Raffle.RaffleState rState = raffle.getRaffleState();
@@ -189,8 +190,9 @@ contract RaffleState is Test {
     function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
         uint256 randomRequestId
     ) public skipFork {
-        vm.expectRevert("nonexistent request");
-        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
+        // vm.expectRevert("nonexistent request");
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
             randomRequestId,
             address(raffle)
         );
@@ -219,9 +221,12 @@ contract RaffleState is Test {
         vm.recordLogs();
         raffle.performUpkeep("");
         Vm.Log[] memory entries = vm.getRecordedLogs();
-        bytes32 requestId = entries[0].topics[2];
 
-        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
+        // 24.8.14 Now entries[0].topics[2] details subId(99814120862086...) not requestId(1), the specific reasons will be studied later
+        bytes32 requestId = entries[1].topics[1];
+        // console2.log("666:", uint256(requestId));
+
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
             uint256(requestId),
             address(raffle)
         );

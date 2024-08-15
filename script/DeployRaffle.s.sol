@@ -14,10 +14,12 @@ contract DeployRaffle is Script {
             uint256 interval,
             address vrfCoordinator,
             bytes32 gasLane,
-            uint64 subscriptionId,
+            uint256 subscriptionId,
             uint32 callbackGasLimit,
             address link,
-            uint256 deployerKey
+            // uint256 deployerKey
+            // 24.8.15 现在此参数由私钥变为了账户地址
+            address account
         ) = helperConfig.activeNetworkConfig();
 
         if (subscriptionId == 0) {
@@ -26,7 +28,7 @@ contract DeployRaffle is Script {
             CreateSubscription createSubscription = new CreateSubscription();
             subscriptionId = createSubscription.createSubscription(
                 vrfCoordinator,
-                deployerKey
+                account
             );
 
             FundSubscription fundSubscription = new FundSubscription();
@@ -34,11 +36,11 @@ contract DeployRaffle is Script {
                 vrfCoordinator,
                 subscriptionId,
                 link,
-                deployerKey
+                account
             );
         }
 
-        vm.startBroadcast(deployerKey); //这里不使用deployerKey的话，testPerformUpkeepRevertsIfCheckUpkeepIsFalse返回错误Raffle__UpkeepNotNeeded合约会有0.04ether的余额，暂未弄清楚原理
+        vm.startBroadcast(account); //这里不使用deployerKey的话，testPerformUpkeepRevertsIfCheckUpkeepIsFalse返回错误Raffle__UpkeepNotNeeded合约会有0.04ether的余额，暂未弄清楚原理
         Raffle raffle = new Raffle(
             entranceFee,
             interval,
@@ -49,12 +51,16 @@ contract DeployRaffle is Script {
         );
         vm.stopBroadcast();
 
+        // 24.8.15 sepolia链addConsumer报错：custom error 1f6a65b6: ，导致raffle合约无法验证，使用时这块暂注释 maybe
+        // network error?
+        // 第二天测试addconsumer 报错为InvalidSubscription(), 在chainlink网站中通过metamask交互，发现现有订阅
+        // 还是和之前的vrf-v2地址0x8103B...64625交互！！
         AddConsumer addConsumer = new AddConsumer();
         addConsumer.addConsumer( //需要保证前面创建订阅和赞助的user和这里添加顾客一致，所以都需要传递deployerKey
             vrfCoordinator,
             subscriptionId,
             address(raffle),
-            deployerKey
+            account
         );
         return (raffle, helperConfig);
     }

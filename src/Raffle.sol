@@ -23,8 +23,12 @@
 
 pragma solidity ^0.8.18;
 
-import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+// import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+// import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+
+// import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title A sample Raffle COntract
@@ -32,7 +36,7 @@ import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2
  * @notice This contarct is for creating a sample raffle
  * @dev Implements Chainlink VRFv2
  */
-contract Raffle is VRFConsumerBaseV2 {
+contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__notEnoughETHSent();
     error Raffle__TransferFailed();
     error Raffle__raffleNotOpen();
@@ -54,9 +58,10 @@ contract Raffle is VRFConsumerBaseV2 {
 
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
-    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
+    // VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     bytes32 private immutable i_gasLane;
-    uint64 private immutable i_subscriptionId;
+    // uint64 private immutable i_subscriptionId;
+    uint256 private immutable i_subscriptionId;
     uint32 private immutable i_callbackGasLimit;
 
     address payable[] private s_players;
@@ -67,20 +72,21 @@ contract Raffle is VRFConsumerBaseV2 {
 
     event EnteredRaffle(address indexed player);
     event PickedWinner(address indexed winner);
-    event RequestedRaffleWinner(uint256 requestId);
+    // 24.8.14 更新后需要在这里添加indexed,否则测试中vm.recordLogs()记录不到requestId
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     constructor(
         uint256 entranceFee,
         uint256 interval,
         address vrfCoordinator,
         bytes32 gasLane,
-        uint64 subscriptionId,
+        uint256 subscriptionId,
         uint32 callbackGasLimit
-    ) VRFConsumerBaseV2(vrfCoordinator) {
+    ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         //VRFConsumerBaseV2.sol构造函数需要vrfCoordinator，在这里的构造函数传递
         i_entranceFee = entranceFee;
         i_interval = interval;
-        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
+        // i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
         i_gasLane = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
@@ -127,21 +133,40 @@ contract Raffle is VRFConsumerBaseV2 {
 
         s_raffleState = RaffleState.CALCULATING;
 
-        uint256 requestId = i_vrfCoordinator.requestRandomWords( //i_vrfCoordinator（接口类型），向这里发送请求，然后vrfCoordinator调用VRFConsumerBaseV2的rawFulfillRandomWords函数验证msg.sender是否为我们自己定义的vrfCoordinator
-            i_gasLane,
-            i_subscriptionId,
-            REQUEST_CONFIRMATIONS,
-            i_callbackGasLimit,
-            NUM_WORDS
+        // uint256 requestId = i_vrfCoordinator.requestRandomWords( //i_vrfCoordinator（接口类型），向这里发送请求，然后vrfCoordinator调用VRFConsumerBaseV2的rawFulfillRandomWords函数验证msg.sender是否为我们自己定义的vrfCoordinator
+        //     i_gasLane,
+        //     i_subscriptionId,
+        //     REQUEST_CONFIRMATIONS,
+        //     i_callbackGasLimit,
+        //     NUM_WORDS
+        // );
+
+        // 24.8.14 update to vrf v2.5
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: i_gasLane,
+                subId: i_subscriptionId,
+                requestConfirmations: REQUEST_CONFIRMATIONS,
+                callbackGasLimit: i_callbackGasLimit,
+                numWords: NUM_WORDS,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            })
         );
 
         emit RequestedRaffleWinner(requestId);
+        // console.log("requestID:", requestId);
     }
 
+    // 内部函数，通过vrfCoordinator调用VRFConsumerBaseV2的rawFulfillRandomWords来调用，因为本合约继承了
+    // VRFConsumerBaseV2，相当于自身有rawFulfillRandomWords函数，这个函数会检查msg.sender是否为vrfCoordinator,
+    // 避免恶意用户调用此函数继而触发fulfillRandomWords（）
     function fulfillRandomWords(
         //CEI Check Effect Interaction
         uint256 /* _requestId */,
-        uint256[] memory _randomWords
+        uint256[] calldata _randomWords
     ) internal override {
         uint256 indexOfWinner = _randomWords[0] % s_players.length;
         address payable winner = s_players[indexOfWinner];
