@@ -50,6 +50,7 @@ contract FundSubscription is Script {
             address link,
             address account
         ) = helperConfig.activeNetworkConfig();
+        // console.log("666:", subId);
         fundSubscription(vrfCoordinator, subId, link, account);
     }
 

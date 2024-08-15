@@ -55,6 +55,8 @@ contract DeployRaffle is Script {
         // network error?
         // 第二天测试addconsumer 报错为InvalidSubscription(), 在chainlink网站中通过metamask交互，发现现有订阅
         // 还是和之前的vrf-v2地址0x8103B...64625交互！！
+        // 24.8.15 目前除了创建订阅返回subid和实际不一致，其余VRF一套和etherscan验证合约通过脚本部署均完成
+        // 自动化选择costom logic, 中间提示vrf余额3link不足，等待的交易要花费10多link，添加了后又只花费了0.35link，实现了自动化
         AddConsumer addConsumer = new AddConsumer();
         addConsumer.addConsumer( //需要保证前面创建订阅和赞助的user和这里添加顾客一致，所以都需要传递deployerKey
             vrfCoordinator,
